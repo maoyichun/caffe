@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "caffe/data_transformer.hpp"
-#include "caffe/util/im_transforms.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
@@ -127,10 +126,11 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
   }
 }
 
+
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Blob<Dtype>* transformed_blob) {
-  // If datum is encoded, decoded and transform the cv::image.
+  // If datum is encoded, decode and transform the cv::image.
   if (datum.encoded()) {
 #ifdef USE_OPENCV
     CHECK(!(param_.force_color() && param_.force_gray()))
@@ -247,32 +247,10 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   const bool do_mirror = param_.mirror() && Rand(2);
   const bool has_mean_file = param_.has_mean_file();
   const bool has_mean_values = mean_values_.size() > 0;
-  const bool has_distort_param = param_.has_distort_param();
-  const bool has_object_scale_param = param_.has_object_scale_param();
 
   CHECK_GT(img_channels, 0);
   CHECK_GE(img_height, crop_size);
   CHECK_GE(img_width, crop_size);
-  
-  cv::Mat distort_img;
-  cv::Mat objscale_img;
-  if(has_distort_param)
-  {
-	distort_img = ApplyDistort(cv_img, param_.distort_param());
-  }
-  else
-  {
-	 cv_img.copyTo(distort_img);
-  }
-
-  if(has_object_scale_param)
-  {
-	  objscale_img = ApplyObjScale(distort_img, param_.object_scale_param());
-  }
-  else
-  {
-	  distort_img.copyTo(objscale_img);
-  }
 
   Dtype* mean = NULL;
   if (has_mean_file) {
@@ -294,7 +272,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
 
   int h_off = 0;
   int w_off = 0;
-  cv::Mat cv_cropped_img = objscale_img;
+  cv::Mat cv_cropped_img = cv_img;
   if (crop_size) {
     CHECK_EQ(crop_size, height);
     CHECK_EQ(crop_size, width);
@@ -307,7 +285,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
       w_off = (img_width - crop_size) / 2;
     }
     cv::Rect roi(w_off, h_off, crop_size, crop_size);
-    cv_cropped_img = objscale_img(roi).clone();
+    cv_cropped_img = cv_img(roi);
   } else {
     CHECK_EQ(img_height, height);
     CHECK_EQ(img_width, width);

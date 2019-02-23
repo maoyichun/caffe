@@ -1,0 +1,6 @@
+dog.jpg 0 1 -1
+eagle.jpg -1 1 2
+giraffe.jpg 2 0 0
+horses.jpg -1 -1 -1
+person.jpg 1 1 1
+scream.jpg 0 0 0
